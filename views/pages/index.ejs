@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <% include ../partials/header.ejs %>
+</head>
+
+<body>
+
+    <% include ../partials/nav.ejs %>
+    
+    <div class="container" style="background-color:white;">
+        <h1>Form</h1>
+        <form action="/getRates" method="get">
+            <label for="weight">Weight (oz)</label>
+            <input type="number" name="weight" min="0.00" step="0.01"><br>
+            <label for="type">Shipping Type</label>
+            <select name="type" id="type">
+                <option value="stamped">Letters (Stamped)</option>
+                <option value="metered">Letters (Metered)</option>
+                <option value="flats">Large Envelopes (Flats)</option>
+                <option value="parcels">Parcels</option>
+            </select>
+            <input type="submit">
+        </form>
+
+    </div>
+
+    <% include ../partials/footer.ejs %>
+    
+</body>
+</html>
