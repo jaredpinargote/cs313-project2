@@ -17,27 +17,41 @@ app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 
 app.get('/', function(request, response) {
-    console.log("Working");
     response.sendFile(__dirname + "/public/html/redirect.html");
-});
-
-app.get('/result', function(request, response) {
-    response.render('pages/result');
 });
 
 app.use(express.static('public/html'));
 
-app.get('/newGame.php', function(request, response) {
-    newGame(response);
-});
+/**
+ * ADAPTERS FOR PHP PROJECT
+ * 
+ * Instead of rewriting client side code, redirect
+ * the request to a NodeJS function
+ */
+app.get('/newGame.php', newGame);
+app.get('/newPlayer.php', findGameWithRoomCode);
+app.get('/playersInGame.php', getPlayersList);
+app.get('/everyoneIn.php', everyoneIn);
+// app.get('/newDrawing.php', newDrawing);
 
-function query(sql, params, response, callback){
+/**
+ * QUERY
+ * 
+ * Used to simplify SQL queries
+ * 
+ * @param {string} sql : SQL string
+ * @param {array} params : Parameter array
+ * @param {*} request : Used to pass variables through callbacks
+ * @param {*} response : Used to pass response through callbacks
+ * @param {*} callback : Callback
+ */
+function query(sql, params, request, response, callback){
     var client = new pg.Client(connectionString);
     client.connect(function(err) {
         if (err) {
             console.log("Error connecting to DB: ")
             console.log(err);
-            callback(err, null, response);
+            callback(err, null, request, response);
         }
         var query = client.query(sql, params, function(err, result) {
             client.end(function(err) {
@@ -47,39 +61,29 @@ function query(sql, params, response, callback){
             if (err) {
                 console.log("Error in query: ")
                 console.log(err);
-                callback(err, null, response);
+                callback(err, null, request, response);
+            } else if (result == undefined || result == null) {
+                console.log("No results!");
+                callback("No results", null, response);
+            } else {
+                console.log("SQL: " + sql);
+                console.log("PARAMS " + JSON.stringify(params));
+                console.log("Found result: " + JSON.stringify(result.rows));
+                callback(null, result.rows, request, response);
             }
-            console.log("SQL: " + sql);
-            console.log("PARAMS " + JSON.stringify(params));
-            console.log("Found result: " + JSON.stringify(result.rows));
-            callback(null, result.rows, response);
         });
     });
 }
 
-function newGame(response) {
-    var sql = "INSERT INTO public.\"Games\" (id, \"startTimestamp\", \"endTimestamp\", \"stageID\") VALUES (default,NULL,NULL,NULL) RETURNING id";
-    var params = [];
-    query(sql, params, response, newRoomCode);
-}
-
-function newRoomCode(err, result, response) {
-    if (err) {
-        console.log("Error in query: ")
-        console.log(err);
-        returnJSON(err, null, response);
-    }
-    var roomCode = randomString();
-    var sql = "INSERT INTO public.\"RoomCodes\" (\"roomCode\", \"gameID\") VALUES ( $1::text , $2::int ) RETURNING *";
-    var params = [roomCode, result[0].id];
-    query(sql, params, response, handleNewGame);
-}
-
-function handleNewGame(err, result, response) {
-    console.log("Handle New Game: " + JSON.stringify(result.rows));
-    returnJSON(err, result[0], response)
-}
-
+/**
+ * RETURN_JSON
+ * 
+ * Used to return JSON to client
+ * 
+ * @param {*} error : Error messages
+ * @param {*} result : result from SQL or data to send back
+ * @param {*} response : Response to send
+ */
 function returnJSON(error, result, response) {
     if (error) {
         response.status(500).json({"success":false,"data":error});
@@ -88,6 +92,16 @@ function returnJSON(error, result, response) {
     }
 }
 
+app.listen(app.get('port'), function() {
+    console.log('Node app is running on port', app.get('port'));
+});
+
+
+/**
+ * HELPER FUNCTIONS
+ */
+
+// CREATE A NEW GAME
 function randomString() {
     var length = 4;
     var str = "";
@@ -99,7 +113,101 @@ function randomString() {
     }
     return str;
 }
+function newGame(request, response) {
+    var sql = "INSERT INTO public.\"Games\" (id, \"startTimestamp\", \"endTimestamp\", \"stageID\") VALUES (default,NULL,NULL,NULL) RETURNING id";
+    var params = [];
+    query(sql, params, request, response, newRoomCode);
+}
+function newRoomCode(err, result, request, response) {
+    if (err) {
+        console.log("Error in query: ")
+        console.log(err);
+        returnJSON(err, null, response);
+    } else if (result == undefined || result == null) {
+        console.log("No results!");
+        returnJSON("No results", null, response);
+    }
+    var roomCode = randomString();
+    var sql = "INSERT INTO public.\"RoomCodes\" (\"roomCode\", \"gameID\") VALUES ( $1::text , $2::int ) RETURNING *";
+    var params = [roomCode, result[0].id];
+    query(sql, params, request, response, handleNewGame);
+}
+function handleNewGame(err, result, request, response) {
+    console.log("Handle New Game: " + JSON.stringify(result.rows));
+    returnJSON(err, result[0], response)
+}
 
-app.listen(app.get('port'), function() {
-    console.log('Node app is running on port', app.get('port'));
-});
+// CREATE A NEW PLAYER
+function findGameWithRoomCode(request, response) {
+    var sql = "SELECT * FROM public.\"RoomCodes\" WHERE \"RoomCodes\".\"roomCode\" = $1::text";
+    var params = [request.query.roomCode];
+    query(sql, params, request, response, newPlayer);
+}
+function newPlayer(err, result, request, response) {
+    if (err) {
+        console.log("Error in query: ")
+        console.log(err);
+        returnJSON(err, null, response);
+    } else if (result == undefined || result == null) {
+        console.log("No results!");
+        returnJSON("No results", null, response);
+    }
+    var sql = "INSERT INTO public.\"Players\" (id, name, \"gameID\") VALUES (default,$1::text,$2::int) RETURNING *";
+    var params = [request.query.playerName, result[0].gameID];
+    query(sql, params, request, response, handleNewPlayer);
+}
+function handleNewPlayer(err, result, request, response) {
+    console.log("Handle New Player: " + JSON.stringify(result.rows));
+    returnJSON(err, result[0], response)
+}
+
+// LIST PLAYERS IN GAME
+function getPlayersList(request, response) {
+    var sql = "SELECT * FROM public.\"Players\" WHERE \"gameID\" = $1::int";
+    var params = [request.query.gameID];
+    query(sql, params, request, response, checkIfReady);
+}
+function checkIfReady(err, result, request, response) {
+    if (err) {
+        console.log("Error in query: ")
+        console.log(err);
+        returnJSON(err, null, response);
+    } else if (result == undefined || result == null) {
+        console.log("No results!");
+        returnJSON("No results", null, response);
+    }
+    // returnJSON(null, result, response);
+    request.list = {};
+    result.forEach(element => {
+        request.list[element.id] = element.name;
+    });
+    console.log("List of players: " + JSON.stringify(request.list));
+    var sql = "SELECT \"startTimestamp\" FROM public.\"Games\" WHERE id = $1";
+    var params = [request.query.gameID];
+    query(sql, params, request, response, handlePlayersList);
+}
+function handlePlayersList(err, result, request, response) {
+        request.list.ready = result[0].startTimestamp;
+        console.log("Returning List: " + JSON.stringify(request.list));
+        returnJSON(err, request.list, response)
+}
+
+// INDICATE EVERYONE IS IN
+function everyoneIn(request, response) {
+    var sql = "UPDATE public.\"Games\" SET \"startTimestamp\" = $1::timestamp WHERE id = $2::int RETURNING *";
+    var params = [
+        new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+        request.query.gameID
+    ];
+    query(sql, params, request, response, handleEveryoneIn);
+}
+function handleEveryoneIn(err, result, request, response) {
+    if (err) {
+        console.log("Error in query: ")
+        console.log(err);
+        returnJSON(err, null, response);
+    }
+    response.end();
+}
+
+// CREATE NEW DRAWING
