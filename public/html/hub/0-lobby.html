@@ -1,0 +1,28 @@
+<h2 id="displayRoomCode"></h2>
+<p>Players:</p>
+<p id="viewPlayersRoomCode"></p>
+<ol id="viewPlayersList"></ol>
+<script>
+    var interval;
+    $("#displayRoomCode").html("Room Code: " + localStorage.roomCode);
+    function checkForNewPlayers() {
+        var gid = localStorage.gameID;
+        $.get("../../playersInGame.php?gameID="+gid, function(data, status){
+            var players = "";
+            console.log(data['ready']);
+            if(data['ready'] != undefined){
+                clearInterval(interval);
+                console.log(data['ready']);
+                loadPage(1);
+            }
+            $.each(data, function(id, name){
+                if(name != undefined && id != "ready")
+                    players += "<li>"+name+"</li>";
+            })
+            $("#viewPlayersList").html(players);
+        });
+    }
+    $(function () {
+        interval = setInterval(checkForNewPlayers, 3000);
+    });
+</script>

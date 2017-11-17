@@ -1,0 +1,12 @@
+<script>
+var nextTime = new Date(localStorage.time1);
+console.log("NextTime:"+nextTime.toTimeString());
+var now = new Date();
+console.log("Now:"+now.toTimeString());
+var millisTillNext = nextTime - now;
+if (millisTillNext < 0) {
+    millisTillNext += 86400000; // it's after 10am, try 10am tomorrow.
+}
+console.log(millisTillNext);
+setTimeout(function(){console.log("Load page")}, millisTillNext);
+</script>

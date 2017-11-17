@@ -1,0 +1,20 @@
+<h1>Caption!</h1>
+<p>4: c</p>
+<div class="container" id="timer"></div>
+<script>
+    var count=30;
+    var counter=setInterval(timer, 1000); //1000 will  run it every 1 second
+    function timer()
+    {
+      count=count-1;
+      if (count <= 0)
+      {
+         clearInterval(counter);
+         //counter ended, do something here
+         loadPage(5);
+         return;
+      }
+      $("#timer").html(count);
+      //Do code for showing the number of seconds here
+    }
+</script>

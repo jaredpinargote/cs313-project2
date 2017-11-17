@@ -1,0 +1,34 @@
+<h1>Waiting for other players...</h1>
+<button id="everyoneIn" class="btn btn-block">Everybody's In</button>
+<ol id="viewPlayersList"></ol>
+<script>
+    // $("#displayRoomCode").html("Room Code: " + localStorage.roomCode);
+    var interval;
+    function checkForNewPlayers() {
+        var gid = localStorage.gameID;
+        $.get("../../playersInGame.php?gameID="+gid, function(data, status){
+            var players = "";
+            console.log(data['ready']);
+            if(data['ready'] != undefined){
+                clearInterval(interval);
+                localStorage.startTime = data['ready'];
+                loadTimes();
+                loadPage(1);
+            }
+            $.each(data, function(id, name){
+                if(name != undefined && id != "ready")
+                    players += "<li>"+name+"</li>";
+            })
+            $("#viewPlayersList").html(players);
+        });
+    }
+    $(function () {
+        interval = setInterval(checkForNewPlayers, 3000);
+    });
+    $("button#everyoneIn").click(function(){
+        var gid = localStorage.gameID;
+        $.get("../../everyoneIn.php?gameID="+gid, function(data, status){
+            // loadPage(1);
+        });
+    });
+</script>

@@ -1,0 +1,33 @@
+body {
+    font: 20px Montserrat, sans-serif;
+    padding-top: 54px;
+    background-color: #474e5d; 
+    /* color: white; */
+}
+
+@media (min-width: 992px) {
+  body {
+    padding-top: 56px;
+  }
+}
+
+
+
+.row {
+  font: 12px Montserrat, sans-serif;
+}
+
+#content{
+    padding: 20px 30px 20px 30px;
+    background-color: white;
+}
+
+#content h1{
+    text-align: center;
+}
+
+#buttons{
+    margin: auto;
+    max-width: 500px;
+    text-align: center;
+}

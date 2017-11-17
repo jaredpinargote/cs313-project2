@@ -1,0 +1,183 @@
+<!-- <style>
+    html {
+      border-top: 5px solid #fff;
+      background: #58DDAF;
+      color: #2a2a2a;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Open Sans';
+    }
+
+    h1 {
+      color: #fff;
+      text-align: center;
+      font-weight: 300;
+    }
+
+    #slider {
+      position: relative;
+      overflow: hidden;
+      margin: 20px auto 0 auto;
+      border-radius: 4px;
+    }
+
+    #slider ul {
+      position: relative;
+      margin: 0;
+      padding: 0;
+      height: 200px;
+      list-style: none;
+    }
+
+    #slider ul li {
+      position: relative;
+      display: block;
+      float: left;
+      margin: 0;
+      padding: 0;
+      width: 500px;
+      height: 300px;
+      background: #ccc;
+      text-align: center;
+      line-height: 300px;
+    }
+
+    a.control_prev, a.control_next {
+      position: absolute;
+      top: 40%;
+      z-index: 999;
+      display: block;
+      padding: 4% 3%;
+      width: auto;
+      height: auto;
+      background: #2a2a2a;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 18px;
+      opacity: 0.8;
+      cursor: pointer;
+    }
+
+    a.control_prev:hover, a.control_next:hover {
+      opacity: 1;
+      -webkit-transition: all 0.2s ease;
+      transition: all 0.2s ease;
+    }
+
+    a.control_prev {
+      border-radius: 0 2px 2px 0;
+    }
+
+    a.control_next {
+      right: 0;
+      border-radius: 2px 0 0 2px;
+    }
+
+    .slider_option {
+      position: relative;
+      margin: 10px auto;
+      width: 160px;
+      font-size: 18px;
+    }
+
+</style> -->
+<h1>Combine!</h1>
+<p>6: c</p>
+<div class="container" id="timer"></div>
+<div id="slider">
+    <!-- <a href="#" class="control_next">&gt;&gt;</a>
+    <a href="#" class="control_prev">&lt;&lt;</a> -->
+    <ul id="drawings">
+        <!-- <li>SLIDE 1</li>
+        <li style="background: #aaa;">SLIDE 2</li>
+        <li>SLIDE 3</li>
+        <li style="background: #aaa;">SLIDE 4</li> -->
+    </ul>
+    <ul id="captions">
+        <!-- <li>SLIDE 1</li>
+        <li style="background: #aaa;">SLIDE 2</li>
+        <li>SLIDE 3</li>
+        <li style="background: #aaa;">SLIDE 4</li> -->
+    </ul>
+    <button id="newCombo" class="btn btn-block btn-success">Submit</button>
+</div>
+<script>
+    var count=30;
+    var counter=setInterval(timer, 1000); //1000 will  run it every 1 second
+    function timer()
+    {
+      count=count-1;
+      if (count <= 0)
+      {
+         clearInterval(counter);
+         //counter ended, do something here
+         loadPage(7);
+         return;
+      }
+      $("#timer").html(count);
+      //Do code for showing the number of seconds here
+    }
+
+    var playerID = localStorage.playerID;
+    var gameID = localStorage.gameID;
+    var request = "../../drawingIDs.php?playerID=" + playerID
+                    + "&gameID=" + gameID;
+    $.get(request, function(data, status){
+        // var obj = $.parseJSON(data);
+        // console.log("Drawing IDs: "+data);
+        $.each(data, function( index, id ) {
+            console.log("Running ID " + id);
+            var img = $("<img />").attr('src', '../../viewDrawing.php?drawingID='+id)
+            .on('load', function() {
+                if (!this.complete || typeof this.naturalWidth == "undefined" || this.naturalWidth == 0) {
+                    console.log('broken image!');
+                } else {
+                    console.log("appending image with id " + id);
+                    $('#drawings').append("<input type='radio' name='drawingID' value='"+id+"'>");
+                    $("#drawings").append(img);
+                    $("#drawings").append("<br>");
+                }
+            });
+            // $("#viewLSVList").append("<li>"+index+": "+value+"</li>");
+        });
+        $("button#newCombo").click(function(){
+            console.log("New Combo...!");
+            var drawingID = $('input[name=drawingID]:checked').val(); 
+            var captionID = $('input[name=captionID]:checked').val(); 
+            console.log("DrawingID:" + drawingID);
+            console.log("ComboID:" + drawingID);
+            var playerID = localStorage.playerID;
+            var gameID = localStorage.gameID;
+            var request = "../../newCombo.php?drawingID=" + drawingID
+                            + "&captionID=" + captionID
+                            + "&playerID=" + playerID
+                            + "&gameID=" + gameID;
+            $.get(request, function(data, status){
+                console.log("Message:"+data['message']);
+                console.log("ComboID:"+data['comboID']);
+                localStorage.comboID = data['comboID'];
+                $("#slider").html("Wait for other players!");
+            });
+        });
+    });
+    var request = "../../gameCaptions.php?gameID=" + gameID;
+    var results = "";
+    // $("#viewCaptionResult").html("");
+    $.get(request, function(data, status){
+        // var obj = $.parseJSON(data);
+        console.log("Captions: "+data);
+        $.each(data, function( index, json ) {
+            console.log("Json? " + json);
+            $.each(json, function( index, value ) {
+                console.log(index + ": " + value);
+            });
+            results += "<input type='radio' name='captionID' value='"+json.id+"'>" + json.name + " wrote: " + json.caption + "<br>";
+        });
+        $("#captions").html(results);
+    });
+    
+</script>

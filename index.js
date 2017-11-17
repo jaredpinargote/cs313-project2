@@ -1,6 +1,12 @@
 var express = require('express');
 var app = express();
 var url = require('url');
+var pg = require("pg");
+
+connectionString = process.env.DATABASE_URL
+if(connectionString == null){
+    connectionString = "postgres://postgres:1q\@W3e\$R@localhost/cs313";
+}
 
 app.set('port', (process.env.PORT || 5000));
 
@@ -11,56 +17,81 @@ app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 
 app.get('/', function(request, response) {
-    response.render('pages/index');
+    response.sendFile(__dirname + "/public/html/redirect.html");
 });
 
 app.get('/result', function(request, response) {
     response.render('pages/result');
 });
 
-app.get('/getRates', function(request, response) {
-    var params = url.parse(request.url, true);
-    var weight = params.query.weight;
-    var type = params.query.type;
-    params.query.price = weight * calculateRate(weight, type);
-    response.render('pages/result', params.query);
+app.use(express.static('public/html'));
+
+app.get('/newGame.php', function(request, response) {
+    newGame(response);
 });
 
-function calculateRate(weight, type) {
-    switch (type) {
-        case "stamped":
-            var weights = [1, 2, 3, 3.5];
-            var rates   = [0.49, 0.70, 0.91, 1.12];
-            return rate(weight, weights, rates);
-            break;
-        case "metered":
-            var weights = [1, 2, 3, 3.5];
-            var rates   = [0.46, 0.67, 0.88, 1.09];
-            return rate(weight, weights, rates);
-            break;
-        case "flats":
-            var weights = [1,2,3,4,5,6,7,8,9,10,11,12,13];
-            var rates   = [0.98,1.19,1.40,1.61,1.82,2.03,2.24,2.45,2.66,2.87,3.08,3.29,3.50];
-            return rate(weight, weights, rates);
-            break;
-        case "parcels":
-            var weights = [1, 2, 3, 3.5];
-            var rates   = [3.00,3.00,3.00,3.00,3.16,3.32,3.48,3.64,3.80,3.96,4.19,4.36,4.53];
-            return rate(weight, weights, rates);
-            break;
-        default:
-            break;
+function query(sql, params, response, callback){
+    var client = new pg.Client(connectionString);
+    client.connect(function(err) {
+        if (err) {
+            console.log("Error connecting to DB: ")
+            console.log(err);
+            callback(err, null, response);
+        }
+        var query = client.query(sql, params, function(err, result) {
+            client.end(function(err) {
+                if (err) throw err;
+            });
+
+            if (err) {
+                console.log("Error in query: ")
+                console.log(err);
+                callback(err, null, response);
+            }
+            console.log("SQL: " + sql);
+            console.log("PARAMS " + JSON.stringify(params));
+            console.log("Found result: " + JSON.stringify(result.rows));
+            callback(null, result.rows, response);
+        });
+    });
+}
+
+function newGame(response) {
+    var sql = "INSERT INTO public.\"Games\" (id, \"startTimestamp\", \"endTimestamp\", \"stageID\") VALUES (default,NULL,NULL,NULL) RETURNING id";
+    var params = [];
+    query(sql, params, response, newRoomCode);
+}
+
+function newRoomCode(err, result, response) {
+    var roomCode = randomString();
+    var sql = "INSERT INTO public.\"RoomCodes\" (\"roomCode\", \"gameID\") VALUES ( $1::text , $2::int ) RETURNING *";
+    var params = [roomCode, result[0].id];
+    query(sql, params, response, handleNewGame);
+}
+
+function handleNewGame(err, result, response) {
+    console.log("Handle New Game: " + JSON.stringify(result.rows));
+    returnJSON(err, result[0], response)
+}
+
+function returnJSON(error, result, response) {
+    if (error) {
+        response.status(500).json({"success":false,"data":error});
+    } else {
+        response.status(200).json(result);
     }
 }
 
-function rate(weight, weights, rates) {
-    for(var i = 0; i < weights.length; i++) {
-        console.log("Key: " + weights[i] + " Weight: " + weight);
-        if(weight < weights[i]) {
-            return rates[i];
-        }
+function randomString() {
+    var length = 4;
+    var str = "";
+    for (var i = 0; i < length; i++) {
+        num = Math.floor(Math.random() * 26) + 65;
+        chr = String.fromCharCode(num);
+        console.log(num+":"+chr);
+        str += chr;
     }
-    return rates[rates.length-1];
+    return str;
 }
 
 app.listen(app.get('port'), function() {
