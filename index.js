@@ -64,6 +64,11 @@ function newGame(response) {
 }
 
 function newRoomCode(err, result, response) {
+    if (err) {
+        console.log("Error in query: ")
+        console.log(err);
+        returnJSON(err, null, response);
+    }
     var roomCode = randomString();
     var sql = "INSERT INTO public.\"RoomCodes\" (\"roomCode\", \"gameID\") VALUES ( $1::text , $2::int ) RETURNING *";
     var params = [roomCode, result[0].id];
