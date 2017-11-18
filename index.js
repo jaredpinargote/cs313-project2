@@ -63,7 +63,7 @@ function query(sql, params, request, response, callback){
     client.connect(function(err) {
         if (err) {
             console.log("Error connecting to DB: ")
-            console.log(err.error);
+            console.log(err);
             callback(err, null, request, response);
         }
         var query = client.query(sql, params, function(err, result) {
@@ -132,7 +132,7 @@ function newGame(request, response) {
 function newRoomCode(err, result, request, response) {
     if (err) {
         console.log("Error in NEW_ROOM_CODE query: ")
-        console.log(err.error);
+        console.log(err);
         returnJSON(err, null, response);
     } else if (result == undefined || result == null) {
         console.log("No results!");
@@ -157,7 +157,7 @@ function findGameWithRoomCode(request, response) {
 function newPlayer(err, result, request, response) {
     if (err) {
         console.log("Error in NEW_PLAYER query: ")
-        console.log(err.error);
+        console.log(err);
         returnJSON(err, null, response);
     } else if (result == undefined || result == null) {
         console.log("No results!");
@@ -181,7 +181,7 @@ function getPlayersList(request, response) {
 function checkIfReady(err, result, request, response) {
     if (err) {
         console.log("Error in CHECK_IF_READY query: ")
-        console.log(err.error);
+        console.log(err);
         returnJSON(err, null, response);
     } else if (result == undefined || result == null) {
         console.log("No results!");
@@ -214,7 +214,7 @@ function everyoneIn(request, response) {
 function handleEveryoneIn(err, result, request, response) {
     if (err) {
         console.log("Error in EVERYONE_IN query: ")
-        console.log(err.error);
+        console.log(err);
         returnJSON(err, null, response);
     }
     response.end();
@@ -245,7 +245,7 @@ function newDrawing(request, response) {
 function handleNewDrawing(err, result, request, response) {
     if (err) {
         console.log("Error in NEW_DRAWING query: ")
-        console.log(err.error);
+        console.log(err);
         returnJSON(err, null, response);
     } else {
         returnJSON(null, {"message":"success"}, response);
@@ -265,7 +265,7 @@ function newCaption(request, response) {
 function handleNewCaption(err, result, request, response) {
     if (err) {
         console.log("Error in NEW_CAPTION query: ")
-        console.log(err.error);
+        console.log(err);
         returnJSON(err, null, response);
     } else {
         returnJSON(null, {"message":"success"}, response);
@@ -281,7 +281,7 @@ function drawingIDs(request, response) {
 function handleDrawingIDs(err, result, request, response) {
     if (err) {
         console.log("Error in LIST_DRAWING_IDS query: ")
-        console.log(err.error);
+        console.log(err);
         returnJSON(err, null, response);
     } else {
         list = {};
@@ -302,7 +302,7 @@ function viewDrawing(request, response) {
 function handleViewDrawing(err, result, request, response) {
     if (err) {
         console.log("Error in VIEW_DRAWING query: ")
-        console.log(err.error);
+        console.log(err);
         returnJSON(err, null, response);
     } else {
         var img = new Buffer(result[0].data, 'base64');
@@ -323,7 +323,7 @@ function gameCaptions(request, response) {
 function handleGameCaptions(err, result, request, response) {
     if (err) {
         console.log("Error in GAME_CAPTIONS query: ")
-        console.log(err.error);
+        console.log(err);
         returnJSON(err, null, response);
     } else {
         returnJSON(null, result, response);
@@ -344,7 +344,7 @@ function newCombo(request, response) {
 function handleNewCombo(err, result, request, response) {
     if (err) {
         console.log("Error in NEW_COMBO query: ")
-        console.log(err.error);
+        console.log(err);
         returnJSON(err, null, response);
     } else {
         returnJSON(null, {
@@ -363,7 +363,7 @@ function viewGameCombos(request, response) {
 function handleViewGameCombos(err, result, request, response) {
     if (err) {
         console.log("Error in VIEW_GAME_COMBOS query: ")
-        console.log(err.error);
+        console.log(err);
         returnJSON(err, null, response);
     } else {
         returnJSON(null, result, response);
