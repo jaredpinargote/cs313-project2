@@ -1,0 +1,59 @@
+<link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="slick/slick.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js"></script>
+<link rel="stylesheet" type="text/css" href="slick/slick-theme.css"/>
+<script type="text/javascript" src="slick/slick.min.js"></script>
+<!-- Custom styles -->
+<link href="../../css/game.css" rel="stylesheet">
+<!-- <script src="ajax.js"></script> -->
+<!-- <script src="../../js/draw.js"></script> -->
+<script src="../../js/database_player.js"></script>
+<h1>Vote!</h1>
+<p>7: c</p>
+<div class="container" id="timer"></div>
+<div id="viewCombosResult"></div>
+<script>
+    var count=30;
+    var counter=setInterval(timer, 1000); //1000 will  run it every 1 second
+    function timer()
+    {
+      count=count-1;
+      if (count <= 0)
+      {
+         clearInterval(counter);
+         //counter ended, do something here
+         loadPage(8);
+         return;
+      }
+      $("#timer").html(count);
+      //Do code for showing the number of seconds here
+    }
+    var request = "../../viewGameCombos.php?gameID=" + localStorage.gameID;
+    $.get(request, function(data, status){
+        console.log("Data:"+JSON.stringify(data));
+        $.each(data, function( index, combo ) {
+            console.log("combo:"+JSON.stringify(combo));
+            // viewCombosResult
+            var img = $("<img />").attr('src', '../../viewDrawing.php?drawingID='+combo.drawingID)
+            .on('load', function() {
+                if (!this.complete || typeof this.naturalWidth == "undefined" || this.naturalWidth == 0) {
+                    console.log('broken image!');
+                } else {
+                    // console.log("appending image with id " + id);
+                    $("#viewCombosResult").append(img);
+                    $("#viewCombosResult").append("<br>Caption: " + combo.caption);
+                    $("#viewCombosResult").append("<br>Drawing creator: " + combo.drawingPlayerName);
+                    $("#viewCombosResult").append("<br>Caption creator: " + combo.captionPlayerName);
+                    $("#viewCombosResult").append("<br>Combo Creator: " + combo.comboPlayerName + "<br><br>");
+                }
+            });
+        });
+        // $('#comboInsertResult').html("Player ID: " + data['id']
+        //     + " Combo ID: " + data['gameID']);
+        // localStorage.playerID = data['id'];
+        // localStorage.playerName = data['name']
+    });
+</script>
