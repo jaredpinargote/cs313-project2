@@ -23,6 +23,7 @@
     $("button#newCaption").click(function(){
         var cap = $("#caption").val();
         $("#caption").val('');
+        console.log("sending caption..");
         $.ajax({
             type: "POST",
             url: "../../newCaption.php",
