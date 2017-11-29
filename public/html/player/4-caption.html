@@ -1,5 +1,4 @@
 <h1>Caption!</h1>
-<p>4: c</p>
 <div class="container" id="timer"></div>
 <label for="caption">Caption:</label>
 <input type="text" class="form-control" id="caption" placeholder="Caption">
@@ -20,7 +19,13 @@
         $("#timer").html(count);
         //Do code for showing the number of seconds here
     }
-    $("button#newCaption").click(function(){
+    $("button#newCaption").keyup(function(event) {
+        if (event.keyCode === 13) {
+            submitCaption();
+        }
+    });
+    $("button#newCaption").click(submitCaption);
+    function submitCaption() {
         var cap = $("#caption").val();
         $("#caption").val('');
         console.log("sending caption..");
@@ -35,5 +40,5 @@
         }).done(function(data) {
             console.log(data['message']);
         });
-    });
+    }
 </script>
